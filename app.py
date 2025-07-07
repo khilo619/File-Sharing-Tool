@@ -4,7 +4,7 @@ from flask import Flask, request, render_template, jsonify, flash, redirect, url
 from collections import defaultdict
 
 app = Flask(__name__)
-app.secret_key = 'WnbXX8NgGMk5W_G6NLeLQTLc9rwrVNb4Nw4SxXyuJ5k'  # Added for flash messages
+app.secret_key = ''  # Added for flash messages
 
 # AWS S3 Configuration
 AWS_BUCKET_NAME = 'thisisbucketname2'
