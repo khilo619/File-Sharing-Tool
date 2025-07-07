@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FileShare Pro | Modern File Manager</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: { light: '#6366f1', DEFAULT: '#4f46e5', dark: '#4338ca' },
+                        secondary: { light: '#f3f4f6', DEFAULT: '#1f2937', dark: '#111827' },
+                        accent: { light: '#f87171', DEFAULT: '#ef4444', dark: '#dc2626' },
+                        success: { light: '#34d399', DEFAULT: '#10b981', dark: '#059669' }
+                    },
+                    fontFamily: {
+                        sans: ['Poppins', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+                    },
+                },
+            },
+        };
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <style>
+        #drop-zone.highlight {
+            border-color: #4f46e5;
+            background-color: #eef2ff;
+        }
+        .file-item:hover {
+            background-color: #f9fafb;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen font-sans">
+    <div class="container mx-auto px-4 py-8 max-w-6xl">
+        <!-- Header -->
+        <header class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+            <div class="flex items-center">
+                <div class="w-12 h-12 rounded-xl bg-primary-600 flex items-center justify-center shadow-lg mr-4">
+                    <i class="fas fa-cloud-upload-alt text-white text-xl"></i>
+                </div>
+                <h1 class="text-3xl font-bold bg-gradient-to-r from-primary-600 to-primary-400 bg-clip-text text-transparent">
+                    FileShare Pro
+                </h1>
+            </div>
+            <div class="flex gap-2">
+                <button id="all-files-btn" onclick="fetchAllFiles()" 
+                    class="px-4 py-2 bg-white rounded-lg shadow hover:shadow-md transition-all flex items-center gap-2 text-secondary-700">
+                    <i class="fas fa-list"></i> All Files
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Upload Card -->
+            <div class="lg:col-span-1 bg-white rounded-xl shadow-md overflow-hidden">
+                <div class="p-4 bg-gradient-to-r from-primary-500 to-primary-600">
+                    <h2 class="text-lg font-semibold text-white">Upload Files</h2>
+                </div>
+                <div class="p-4">
+                    <form id="upload-form" action="/upload" method="POST" enctype="multipart/form-data">
+                        <div id="drop-zone" class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer transition-colors">
+                            <i class="fas fa-cloud-upload-alt text-primary-500 text-3xl mb-2"></i>
+                            <p class="text-gray-600 mb-1">Drag & drop files here</p>
+                            <p class="text-xs text-gray-500 mb-3">or</p>
+                            <button type="button" id="choose-file-button" class="px-3 py-1.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm">
+                                Select File
+                            </button>
+                            <input type="file" id="file-input" name="file" class="hidden">
+                        </div>
+                        
+                        <div id="file-info" class="mt-3 bg-gray-50 p-3 rounded-lg">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2 truncate">
+                                    <i class="fas fa-file text-primary-500"></i>
+                                    <span id="selected-file" class="text-gray-700 text-sm truncate">No file selected</span>
+                                </div>
+                                <button type="button" id="clear-file" class="text-gray-400 hover:text-gray-600 text-sm">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <button type="button" id="upload-button" class="mt-3 w-full py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center justify-center gap-2">
+                            <i class="fas fa-upload"></i> Upload Now
+                        </button>
+                    </form>
+                    
+                    <div id="error-message" class="mt-3 p-2 rounded-lg bg-red-50 text-red-600 text-sm hidden"></div>
+                    
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="mt-3 p-2 rounded-lg {% if category == 'success' %}bg-green-50 text-green-600{% else %}bg-red-50 text-red-600{% endif %} text-sm">
+                                    <i class="fas {% if category == 'success' %}fa-check-circle{% else %}fa-exclamation-circle{% endif %} mr-1"></i>
+                                    {{ message }}
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                </div>
+            </div>
+
+            <!-- Files Browser -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                    <div class="p-4 bg-gradient-to-r from-secondary-600 to-secondary-700">
+                        <h2 class="text-lg font-semibold text-white">File Browser</h2>
+                    </div>
+                    <div class="p-4">
+                        <!-- Category Filters -->
+                        <div class="flex flex-wrap gap-2 mb-4">
+                            <button onclick="fetchFiles('PDF Files')" class="category-btn px-3 py-1 bg-white rounded shadow hover:shadow-md transition-all flex items-center gap-1 text-xs">
+                                <i class="fas fa-file-pdf text-red-500"></i> PDF
+                            </button>
+                            <button onclick="fetchFiles('Images')" class="category-btn px-3 py-1 bg-white rounded shadow hover:shadow-md transition-all flex items-center gap-1 text-xs">
+                                <i class="fas fa-image text-blue-500"></i> Images
+                            </button>
+                            <button onclick="fetchFiles('Audio')" class="category-btn px-3 py-1 bg-white rounded shadow hover:shadow-md transition-all flex items-center gap-1 text-xs">
+                                <i class="fas fa-music text-purple-500"></i> Audio
+                            </button>
+                            <button onclick="fetchFiles('Videos')" class="category-btn px-3 py-1 bg-white rounded shadow hover:shadow-md transition-all flex items-center gap-1 text-xs">
+                                <i class="fas fa-video text-orange-500"></i> Videos
+                            </button>
+                            <button onclick="fetchFiles('Documents')" class="category-btn px-3 py-1 bg-white rounded shadow hover:shadow-md transition-all flex items-center gap-1 text-xs">
+                                <i class="fas fa-file-alt text-blue-600"></i> Docs
+                            </button>
+                            <button onclick="fetchFiles('Archives')" class="category-btn px-3 py-1 bg-white rounded shadow hover:shadow-md transition-all flex items-center gap-1 text-xs">
+                                <i class="fas fa-file-archive text-yellow-500"></i> Archives
+                            </button>
+                            <button onclick="fetchFiles('Web Files')" class="category-btn px-3 py-1 bg-white rounded shadow hover:shadow-md transition-all flex items-center gap-1 text-xs">
+                                <i class="fas fa-code text-green-500"></i> Web
+                            </button>
+                            <button onclick="fetchFiles('Others')" class="category-btn px-3 py-1 bg-white rounded shadow hover:shadow-md transition-all flex items-center gap-1 text-xs">
+                                <i class="fas fa-file text-gray-500"></i> Others
+                            </button>
+                        </div>
+
+                        <!-- Current Category Title -->
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 id="category-title" class="text-md font-medium text-secondary-700">
+                                <i class="fas fa-folder-open mr-1"></i> Select a category
+                            </h3>
+                            <div id="file-count" class="text-xs text-gray-500">0 files</div>
+                        </div>
+
+                        <!-- Files List -->
+                        <div class="border rounded-lg overflow-hidden">
+                            <ul id="file-list" class="divide-y divide-gray-200">
+                                <li class="p-3 text-center text-gray-500 text-sm">
+                                    Select a category to view files
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="delete-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg p-4 max-w-xs w-full mx-4 animate__animated animate__fadeIn">
+            <div class="flex justify-between items-start mb-3">
+                <h3 class="text-md font-semibold text-secondary-700">Confirm Deletion</h3>
+                <button id="close-modal" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <p id="modal-message" class="mb-4 text-gray-600 text-sm">Are you sure you want to delete this file?</p>
+            <div class="flex justify-end gap-2">
+                <button id="cancel-delete" class="px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors text-sm">
+                    Cancel
+                </button>
+                <button id="confirm-delete" class="px-3 py-1 bg-accent-600 text-white rounded hover:bg-accent-700 transition-colors text-sm">
+                    Delete
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const uploadButton = document.getElementById('upload-button');
+        const selectedFileDisplay = document.getElementById('selected-file');
+        const fileInfo = document.getElementById('file-info');
+        const clearFileButton = document.getElementById('clear-file');
+        const errorMessage = document.getElementById('error-message');
+        const deleteModal = document.getElementById('delete-modal');
+        const closeModalButton = document.getElementById('close-modal');
+        const cancelDeleteButton = document.getElementById('cancel-delete');
+        const confirmDeleteButton = document.getElementById('confirm-delete');
+        const modalMessage = document.getElementById('modal-message');
+
+        // State
+        let draggedFile = null;
+        let fileToDelete = null;
+
+        // Allowed extensions
+        const allowedExtensions = ['pdf', 'png', 'jpg', 'jpeg', 'gif', 'bmp', 'txt', 'csv', 'docx', 'xlsx', 'pptx', 'zip', 'tar', 'rar', '7z', 'mp3', 'wav', 'mp4', 'avi', 'mov', 'html', 'xml'];
+        const maxFileSize = 10 * 1024 * 1024; // 10MB
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchAllFiles();
+        });
+
+        // Event Listeners
+        dropZone.addEventListener('click', () => fileInput.click());
+        document.getElementById('choose-file-button').addEventListener('click', () => fileInput.click());
+        clearFileButton.addEventListener('click', resetFileSelection);
+        uploadButton.addEventListener('click', handleUpload);
+        closeModalButton.addEventListener('click', () => deleteModal.classList.add('hidden'));
+        cancelDeleteButton.addEventListener('click', () => deleteModal.classList.add('hidden'));
+        confirmDeleteButton.addEventListener('click', deleteFile);
+
+        // Drag and Drop
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight() {
+            dropZone.classList.add('highlight');
+        }
+
+        function unhighlight() {
+            dropZone.classList.remove('highlight');
+        }
+
+        dropZone.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files.length) {
+                fileInput.files = files;
+                updateSelectedFileDisplay();
+            }
+        }
+
+        fileInput.addEventListener('change', updateSelectedFileDisplay);
+
+        // Functions
+        function updateSelectedFileDisplay() {
+            const file = fileInput.files[0];
+            if (file) {
+                selectedFileDisplay.textContent = file.name;
+                fileInfo.classList.remove('hidden');
+                errorMessage.classList.add('hidden');
+            } else {
+                resetFileSelection();
+            }
+        }
+
+        function resetFileSelection() {
+            fileInput.value = '';
+            selectedFileDisplay.textContent = 'No file selected';
+            fileInfo.classList.add('hidden');
+            errorMessage.classList.add('hidden');
+        }
+
+        async function handleUpload() {
+            const file = fileInput.files[0];
+            if (!file) {
+                showError('Please select a file first');
+                return;
+            }
+
+            const extension = file.name.split('.').pop().toLowerCase();
+            if (!allowedExtensions.includes(extension)) {
+                showError('File type not allowed');
+                return;
+            }
+
+            if (file.size > maxFileSize) {
+                showError('File size exceeds 10MB limit');
+                return;
+            }
+
+            // Show loading state
+            uploadButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+            uploadButton.disabled = true;
+
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.redirected) {
+                    window.location.href = response.url;
+                } else if (!response.ok) {
+                    throw new Error('Upload failed');
+                }
+            } catch (error) {
+                showError('Upload error: ' + error.message);
+            } finally {
+                uploadButton.innerHTML = '<i class="fas fa-upload"></i> Upload Now';
+                uploadButton.disabled = false;
+            }
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.remove('hidden');
+        }
+
+        async function fetchFiles(category) {
+            document.getElementById('category-title').innerHTML = `<i class="fas fa-folder-open mr-1"></i> ${category}`;
+            document.getElementById('file-list').innerHTML = '<li class="p-3 text-center text-gray-500 text-sm animate-pulse">Loading files...</li>';
+            
+            try {
+                const response = await fetch('/files');
+                if (!response.ok) throw new Error('Network response was not ok');
+                
+                const data = await response.json();
+                const files = data[category] || [];
+                updateFileList(files, category);
+            } catch (error) {
+                document.getElementById('file-list').innerHTML = `
+                    <li class="p-3 text-center text-red-500 text-sm">
+                        <i class="fas fa-exclamation-triangle mr-1"></i> ${error.message}
+                    </li>`;
+                console.error('Fetch error:', error);
+            }
+        }
+
+        async function fetchAllFiles() {
+            document.getElementById('category-title').innerHTML = `<i class="fas fa-list mr-1"></i> All Files`;
+            document.getElementById('file-list').innerHTML = '<li class="p-3 text-center text-gray-500 text-sm animate-pulse">Loading all files...</li>';
+            
+            try {
+                const response = await fetch('/files');
+                if (!response.ok) throw new Error('Network response was not ok');
+                
+                const data = await response.json();
+                let allFiles = [];
+                for (const category in data) {
+                    allFiles = allFiles.concat(data[category]);
+                }
+                updateFileList(allFiles, 'All Files');
+            } catch (error) {
+                document.getElementById('file-list').innerHTML = `
+                    <li class="p-3 text-center text-red-500 text-sm">
+                        <i class="fas fa-exclamation-triangle mr-1"></i> ${error.message}
+                    </li>`;
+                console.error('Fetch error:', error);
+            }
+        }
+
+        function updateFileList(files, category) {
+            const fileList = document.getElementById('file-list');
+            fileList.innerHTML = '';
+            
+            if (files.length === 0) {
+                fileList.innerHTML = '<li class="p-3 text-center text-gray-500 text-sm">No files found</li>';
+                document.getElementById('file-count').textContent = '0 files';
+                return;
+            }
+            
+            document.getElementById('file-count').textContent = `${files.length} ${files.length === 1 ? 'file' : 'files'}`;
+            
+            files.forEach(file => {
+                const li = document.createElement('li');
+                li.className = 'file-item p-3 flex items-center justify-between hover:bg-gray-50 transition-colors';
+                
+                const ext = file.name.split('.').pop().toLowerCase();
+                let iconClass = 'fa-file text-gray-500';
+                
+                if (ext === 'pdf') iconClass = 'fa-file-pdf text-red-500';
+                else if (['jpg', 'jpeg', 'png', 'gif', 'bmp'].includes(ext)) iconClass = 'fa-file-image text-blue-500';
+                else if (['mp3', 'wav'].includes(ext)) iconClass = 'fa-file-audio text-purple-500';
+                else if (['mp4', 'avi', 'mov'].includes(ext)) iconClass = 'fa-file-video text-orange-500';
+                else if (['txt', 'csv', 'docx', 'xlsx', 'pptx'].includes(ext)) iconClass = 'fa-file-alt text-blue-600';
+                else if (['zip', 'rar', 'tar', '7z'].includes(ext)) iconClass = 'fa-file-archive text-yellow-500';
+                else if (['html', 'xml'].includes(ext)) iconClass = 'fa-file-code text-green-500';
+                
+                li.innerHTML = `
+                    <div class="flex items-center gap-2 truncate">
+                        <i class="fas ${iconClass}"></i>
+                        <span class="text-gray-700 text-sm truncate" title="${file.name}">${file.name}</span>
+                    </div>
+                    <div class="flex gap-1">
+                        <a href="${file.url}" download="${file.name}" class="px-2 py-1 bg-primary-600 text-white rounded hover:bg-primary-700 transition-colors text-xs">
+                            <i class="fas fa-download"></i>
+                        </a>
+                        <button onclick="showDeleteModal('${file.name.replace(/'/g, "\\'")}')" class="px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-xs">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                `;
+                fileList.appendChild(li);
+            });
+        }
+
+        function showDeleteModal(filename) {
+            fileToDelete = filename;
+            modalMessage.textContent = `Are you sure you want to delete "${filename}"?`;
+            deleteModal.classList.remove('hidden');
+        }
+
+        async function deleteFile() {
+            if (!fileToDelete) return;
+            
+            deleteModal.classList.add('hidden');
+            
+            // Show loading
+            const loading = document.createElement('div');
+            loading.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            loading.innerHTML = '<div class="bg-white p-4 rounded shadow"><i class="fas fa-spinner fa-spin text-primary-600 mr-2"></i> Deleting file...</div>';
+            document.body.appendChild(loading);
+            
+            try {
+                const response = await fetch('/delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ filename: fileToDelete })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Refresh current view
+                    const currentView = document.getElementById('category-title').textContent.includes('All Files') 
+                        ? fetchAllFiles 
+                        : () => fetchFiles(document.getElementById('category-title').textContent.replace('📂 ', ''));
+                    currentView();
+                } else {
+                    alert(`Delete failed: ${result.error}`);
+                }
+            } catch (error) {
+                alert(`Delete error: ${error.message}`);
+            } finally {
+                document.body.removeChild(loading);
+                fileToDelete = null;
+            }
+        }
+    </script>
+</body>
+</html>
