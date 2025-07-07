@@ -1,4 +1,4 @@
-# FileShare Pro
+# FileSharing Tool
 
 A modern, user-friendly web application for uploading, browsing, downloading, and deleting files, powered by Flask and AWS S3.
 
