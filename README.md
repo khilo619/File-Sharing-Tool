@@ -10,7 +10,7 @@ A modern, user-friendly web application for uploading, browsing, downloading, an
 - **Category Browsing** (PDFs, Images, Audio, Videos, Documents, Archives, Web Files, Others)
 - **Download & Delete Files**
 - **Responsive UI** (Tailwind CSS, Font Awesome)
-- **Local or S3 Storage** (configurable)
+- **AWS S3 Storage** (secure, scalable cloud storage)
 
 ---
 
@@ -39,13 +39,14 @@ A modern, user-friendly web application for uploading, browsing, downloading, an
 
 ---
 
-## Getting Started
+## Getting Started (Local Development)
 
 ### Prerequisites
 
 - Python 3.8+
 - Flask (`pip install flask`)
-- (Optional) AWS credentials if using S3
+- boto3 (`pip install boto3`)
+- AWS account with S3 bucket (for cloud storage)
 
 ### Installation
 
@@ -60,8 +61,9 @@ A modern, user-friendly web application for uploading, browsing, downloading, an
     pip install -r requirements.txt
     ```
 
-3. **(Optional) Configure AWS S3:**
-    - Set your bucket name and credentials in `app.py` if you want to use S3.
+3. **Configure AWS S3:**
+    - Set your bucket name in `app.py` (`AWS_BUCKET_NAME = 'your-bucket-name'`).
+    - Configure AWS credentials (see below).
 
 4. **Run the app:**
     ```bash
@@ -70,6 +72,55 @@ A modern, user-friendly web application for uploading, browsing, downloading, an
 
 5. **Open in your browser:**
     - Visit [http://localhost:5000](http://localhost:5000)
+
+---
+
+## Deployment on AWS
+
+### 1. **Create an S3 Bucket**
+- Go to the [AWS S3 Console](https://s3.console.aws.amazon.com/s3/).
+- Click **Create bucket**.
+- Give it a unique name (e.g., `your-bucket-name`).
+- Choose a region and create the bucket.
+
+### 2. **Set Up IAM Role for EC2**
+- Go to the [IAM Console](https://console.aws.amazon.com/iam/).
+- Create a new role:
+  - **Trusted entity:** AWS service
+  - **Use case:** EC2
+- Attach the policy: `AmazonS3FullAccess` (or a more restrictive policy for production).
+- Name the role (e.g., `FileShareS3Role`).
+
+### 3. **Launch an EC2 Instance**
+- Go to the [EC2 Console](https://console.aws.amazon.com/ec2/).
+- Launch a new instance (Amazon Linux 2 or Ubuntu recommended).
+- Assign the IAM role you created to the instance.
+- Open security group ports: **80** (HTTP), **22** (SSH), and **5000** (for Flask dev server, optional).
+
+### 4. **Connect to EC2 and Deploy**
+- SSH into your EC2 instance:
+    ```bash
+    ssh -i your-key.pem ec2-user@your-ec2-public-dns
+    ```
+- Install Python, pip, and git if not already installed.
+- Clone your repository:
+    ```bash
+    git clone https://github.com/yourusername/File-Handling-Tool.git
+    cd File-Handling-Tool
+    ```
+- Install requirements:
+    ```bash
+    pip install -r requirements.txt
+    ```
+- Run your Flask app:
+    ```bash
+    python app.py
+    ```
+- (For production, use [Gunicorn](https://gunicorn.org/) and a reverse proxy like Nginx.)
+
+### 5. **No AWS Credentials Needed in Code**
+- Because your EC2 instance has the IAM role attached, `boto3` will automatically use those permissions to access S3.
+- **Never hardcode AWS credentials in your code.**
 
 ---
 
@@ -103,10 +154,18 @@ File-Handling-Tool/
 
 ---
 
+## Security Notes
+
+- **Never commit AWS credentials** to your repository.
+- Use IAM roles for EC2 for secure, temporary credentials.
+- Restrict S3 bucket permissions as much as possible.
+
+---
+
 ## License
 
 MIT License
 
 ---
 
-**Made with ❤️ by [Your Name](https://github.com/yourusername)**
+**Made with ❤️ by [KhiLo](https://github.com/khilo619)**
