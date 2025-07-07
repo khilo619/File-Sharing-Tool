@@ -10,14 +10,33 @@ A modern, user-friendly web application for uploading, browsing, downloading, an
 - **Responsive UI**: Clean, mobile-friendly design using Tailwind CSS and Font Awesome.
 - **AWS S3 Storage**: All files are securely stored and managed in your Amazon S3 bucket.
 
-## Screenshots
-
-![Upload & Browse](screenshots/upload_browse.png)
-![Delete Confirmation](screenshots/delete_modal.png)
-
 ## Demo
 
-[Live Demo Link (if available)](https://your-demo-url.com)
+https://github.com/yourusername/File-Handling-Tool/blob/main/demo/FileSharing%20Tool_%20Modern%20File%20Manager%20-%20Google%20Chrome%202025-07-08%2000-39-15.mp4
+
+<details>
+<summary>Click to watch demo video</summary>
+
+[![Watch the demo](https://img.youtube.com/vi/VIDEO_ID/0.jpg)](demo/FileSharing%20Tool_%20Modern%20File%20Manager%20-%20Google%20Chrome%202025-07-08%2000-39-15.mp4)
+
+</details>
+
+## Screenshots
+
+**Main Page**  
+![Main Page](screen-shots/main%20page.PNG)
+
+**All Files View**  
+![All Files](screen-shots/all%20files.PNG)
+
+**PDFs Category**  
+![PDFs](screen-shots/pdfs.PNG)
+
+**Images Category**  
+![Images](screen-shots/images.PNG)
+
+**Documents Category**  
+![Documents](screen-shots/docs.PNG)
 
 ## Getting Started
 
